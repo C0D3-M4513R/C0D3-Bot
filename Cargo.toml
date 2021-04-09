@@ -1,0 +1,19 @@
+[package]
+name = "untitled"
+version = "0.1.0"
+authors = ["C0D3 M4513R <28912031+C0D3-M4513R@users.noreply.github.com>"]
+edition = "2018"
+include = ["src/**"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+#.env support
+dotenv = "0.15"
+#logging
+tracing = "0.1.23"
+tracing-subscriber = "0.2"
+#bot
+serenity = { version = "0.10", features = ["cache", "framework", "standard_framework", "rustls_backend"] }
+#async main
+tokio = { version = "1.0", features = ["macros", "signal", "rt-multi-thread"] }
