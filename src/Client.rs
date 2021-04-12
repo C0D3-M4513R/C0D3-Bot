@@ -1,13 +1,10 @@
-use serenity::{Error, Client};
+use serenity::Client;
 use crate::constants::Constants;
-use serenity::model::guild::Guild;
 use serenity::prelude::TypeMapKey;
 use std::sync::Arc;
 use serenity::client::bridge::gateway::ShardManager;
-use serenity::futures::TryFutureExt;
-use std::collections::{HashMap, HashSet};
-use serenity::model::id::{ChannelId,GuildId};
-use serenity::model::channel::{GuildChannel, Message};
+use std::collections::HashSet;
+use serenity::model::channel::Message;
 use serenity::client::{validate_token, Context};
 use serenity::http::Http;
 use serenity::framework::StandardFramework;
@@ -15,7 +12,6 @@ use tokio::sync::Mutex;
 use serenity::async_trait;
 use serenity::framework::standard::macros::{group,command};
 use serenity::model::gateway::Ready;
-
 pub struct ShardManagerContainer;
 
 impl TypeMapKey for ShardManagerContainer {
@@ -30,55 +26,10 @@ struct General;
 
 #[async_trait]
 impl serenity::client::EventHandler for Handler {
-	async fn ready(&self, ctx: Context, ready: Ready) {
-		tracing::info!("{} is connected!", ready.user.name);
-		let cty = ctx.clone();
-		let http = cty.http.clone();
-		let http_ref = http.as_ref();
-		let guilds = cty
-			.cache
-			.guilds()
-			.await;
-		
-		for guild_i in &guilds {
-			tracing::info!("Got guild Id:{}", guild_i.as_u64())
-		}
-		
-		let tmp = Guild::get(
-			cty
-				.http
-				.clone()
-				.as_ref(),
-			GuildId::from(Constants::get_constants().default_bot_logging_guild_id),
-		).and_then(|guild| async move {
-			tracing::info!("Got Guild!");
-			guild
-				// .as_ref()
-				// .expect(constants::Constants::get_constants().err_bot_guild_invalid.as_str())
-				.channels(http_ref).await
-		}
-		).inspect_err(|e:&serenity::Error|{
-			tracing::error!("Inner error is '{}'",e.to_string());
-			panic!("{}",serenity::Error::Other(Constants::get_constants().err_bot_guild_invalid.as_str()));
-		}).and_then(|channels:HashMap<ChannelId, GuildChannel>| async move {
-			tracing::info!("Got channels!");
-			let channel = channels.get(&ChannelId::from(Constants::get_constants().default_bot_logging_channel_id));
-			if channel.is_some(){
-				tracing::info!("Got a valid logging Channel!");
-			}else{
-				panic!("{}",Constants::get_constants().err_bot_channel_invalid.as_str());
-			}
-			channel
-				.unwrap()
-				.say(ctx, format!("Bot {}#{} Shard {} startup", ready.user.name, ready.user.discriminator, cty.shard_id))
-				.await
-		}).inspect_err(|_|
-			panic!("Unable to send a message!")
-		).await;
-		
-		match tmp {
-			Ok(v)=>drop(v),
-			Err(_)=>unreachable!()
+	async fn ready(&self, _: Context, ready: Ready) {
+		match ready.shard{
+			Some(shard) => tracing::info!("{} is connected with shard {} of {}!", ready.user.name, shard[0] , shard[1]),
+			None => tracing::info!("{} is connected!", ready.user.name),
 		}
 	}
 }
@@ -133,6 +84,7 @@ pub async fn init_client() -> Client {
 	}
 	return client;
 }
+
 
 #[command]
 async fn ping(ctx: &Context, msg: &Message) -> serenity::framework::standard::CommandResult {

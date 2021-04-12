@@ -3,20 +3,20 @@ name = "untitled"
 version = "0.1.0"
 authors = ["C0D3 M4513R <28912031+C0D3-M4513R@users.noreply.github.com>"]
 edition = "2018"
-include = ["src/**"]
-
+#include = ["src/**"]
+include = ["test/**"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 #.env support
 dotenv = "0.15"
 #logging
-tracing = "0.1.23"
-tracing-subscriber = "0.2"
-tracing-honeycomb = "0.1.0"
+tracing = {version = "0.1.25", features = ["attributes"]}
+tracing-attributes = "0.1.15"
+tracing-subscriber = "0.2.17"
+eaze-tracing-honeycomb = "0.2.1-eaze.7"
 libhoney-rust = "0.1.6"
 #bot
 serenity = { version = "0.10", features = ["cache", "framework", "standard_framework", "rustls_backend"] }
 #async main
 tokio = { version = "1.4", features = ["macros", "signal", "rt-multi-thread"] }
-tokio-util = "0.6"
