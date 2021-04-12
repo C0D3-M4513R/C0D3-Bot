@@ -1,6 +1,4 @@
-use core::hint;
-
-static mut CONSTANTS: Option<Constants> = None;
+use std::io::{stderr, Write};
 
 pub struct Constants{
 	pub discord_token:String,
@@ -19,14 +17,13 @@ pub struct Constants{
 }
 impl Constants{
 	fn new() -> Self {
-		tracing::info!("Reading .env!");
 		let guild_id = get_dotenv_id::<u64>("LOGGING_GUILD_ID");
 		let channel_id = get_dotenv_id::<u64>("LOGGING_CHANNEL_ID");
 		Constants {
 			discord_token:get_dotenv("DISCORD_TOKEN"),
 			default_bot_logging_guild_id: guild_id,
 			default_bot_logging_channel_id: channel_id,
-			err_bot_guild_invalid: format!("The Chanel referenced by 'default_bot_logging_guild_id' (which is the guild, with the id `{}`) does not exist!", guild_id),
+			err_bot_guild_invalid: format!("The Guild referenced by 'default_bot_logging_guild_id' (which is the guild, with the id `{}`) does not exist!", guild_id),
 			err_bot_channel_invalid: format!("The Chanel referenced by 'default_bot_logging_channel_id' (which is the channel, with the id {}) does not exist!", channel_id),
 			default_webhook_id: get_dotenv_id::<u64>("WEBHOOK_ID"),
 			default_webhook_token: get_dotenv("WEBHOOK_TOKEN"),
@@ -38,19 +35,16 @@ impl Constants{
 		}
 	}
 	pub fn get_constants() -> &'static Self{
-		unsafe {
-			if let None = CONSTANTS {
-				CONSTANTS=Some(Constants::new())
-			}
-		}
-		match unsafe { &CONSTANTS }.as_ref(){
-			Some(v) => v,
-			None => unsafe { hint::unreachable_unchecked() }
-		}
+		//This should be fine, since this static is not mutable outside this function
+		tracing::debug!("Getting Constants");
+		static mut CONSTANTS: Option<Constants> = None;
+		unsafe { &mut CONSTANTS}.get_or_insert_with(|| {
+			tracing::info!("Generating Constants");
+			Constants::new() })
 	}
 }
 fn get_dotenv(name:&str) -> String{
-	dotenv::var(name).expect(format!("There is some error with the setting {} in dotenv!",name).as_str())
+	std::env::var(name).expect(format!("There is some error with the setting {} in dotenv!",name).as_str())
 }
 fn get_dotenv_id<T: std::str::FromStr>(name:&str) -> T{
 	let type_name = std::any::type_name::<T>();
