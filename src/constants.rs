@@ -5,8 +5,6 @@ pub struct Constants{
 }
 impl Constants{
 	fn new() -> Self {
-		let guild_id = get_dotenv_id::<u64>("LOGGING_GUILD_ID");
-		let channel_id = get_dotenv_id::<u64>("LOGGING_CHANNEL_ID");
 		Constants {
 			default_webhook_id: get_dotenv_id::<u64>("WEBHOOK_ID"),
 			default_webhook_token: get_dotenv("WEBHOOK_TOKEN"),

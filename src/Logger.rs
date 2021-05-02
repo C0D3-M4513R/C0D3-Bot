@@ -6,18 +6,19 @@ use serenity::Error;
 use serenity::http::Http;
 use serenity::model::channel::Message;
 use serenity::model::webhook::Webhook;
-use tokio::runtime::Runtime;
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::constants::Constants;
+use crate::get_rt;
+use std::sync::Arc;
 
 type ChannelType<'a, 'b> = &'a mut ExecuteWebhook<'b>;
 
-// trait Modify<'a,'b> = FnOnce(ChannelType) -> ChannelType;
+#[derive(Clone)]
 pub struct Logger {
 	token: &'static str,
 	id: u64,
-	context: Http,
+	context: Arc<Http>,
 	channel: Webhook,
 }
 
@@ -50,15 +51,15 @@ impl Logger {
 	}
 	
 	pub fn new(webhook_id: u64, webhook_token: &'static str) -> Self {
-		let context = Http::new_with_token(webhook_token);
-		let channel = Runtime::new().expect("No Logger Runtime?").block_on(
+		let context =Http::new_with_token(webhook_token);
+		let channel = get_rt().block_on(
 			(&context).get_webhook_with_token(webhook_id, webhook_token)
-		).map_err(|_| tracing::error!("{}", &Constants::get_constants().webhook_err_str))
-			.expect(&Constants::get_constants().webhook_err_str);
+		).map_err(|e| tracing::error!("Getting webhook failed, due to: '{}'",e.to_string()))
+			.expect("See Logs!");
 		Logger {
 			token: webhook_token,
 			id: webhook_id,
-			context,
+			context:Arc::new(context),
 			channel,
 		}
 	}
@@ -81,6 +82,7 @@ impl Logger {
 	}
 }
 
+#[derive(Clone)]
 pub struct LoggerWriter<T>{
 	tx:UnboundedSender<T>
 }
@@ -150,7 +152,11 @@ impl Write for &LoggerWriter<String> {
 	///which would result in part of the buffer being retried, and sending a partial message.
 	fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
 		let str = String::from_utf8_lossy(buf).to_string();
-		self.say_str_sync(str).map(|_|buf.len())
+		if crate::is_logging_enabled("WEBHOOK_LOGGING_ENABLED".to_string()) {
+			self.say_str_sync(str).map(|_| buf.len())
+		} else {
+			Ok(buf.len())
+		}
 	}
 	fn flush(&mut self) -> std::io::Result<()> {
 		Ok(())

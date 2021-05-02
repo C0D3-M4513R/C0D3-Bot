@@ -1,5 +1,4 @@
 use serenity::Client;
-use crate::constants::Constants;
 use serenity::prelude::TypeMapKey;
 use std::sync::Arc;
 use serenity::client::bridge::gateway::ShardManager;
@@ -36,7 +35,7 @@ impl serenity::client::EventHandler for Handler {
 
 pub async fn init_client() -> Client {
 	tracing::debug!("Getting Client Token");
-	let token = &Constants::get_constants().discord_token;
+	let token = std::env::var("DISCORD_TOKEN").expect("No Token. Unable to Start Bot!");
 	assert!(validate_token(&token).is_ok(), "Invalid discord token!");
 	
 	let http = Http::new_with_token(&token);

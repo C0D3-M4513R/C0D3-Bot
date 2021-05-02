@@ -32,19 +32,8 @@ fn main() {
 	// the CWD. See `./.env.example` for an example on how to structure this.
 	dotenv::dotenv().expect("Failed to load .env file");
 	
-	let mut webhook_sub = tracing_subscriber::fmt::Layer::new()
-		.with_writer(LoggerWriter::logger_writer)
-		.compact()
-		.without_time()
-		.with_ansi(false)
-		.with_level(false);
-	
-	if is_logging_enabled("WEBHOOK_LOGGGING_ENABLED".to_string()) {
-		tokio::spawn(Logger::logger().say_str(None, "Prefire Async Webhook Message, to create Async Webhook Writer".to_string()));
-		LoggerWriter::logger_writer().say_str_sync("Prefire Sync Webhook Message, to create Sync Webhook Writer".to_string()).expect("");
-		
-		webhook_sub=webhook_sub.with_level(true);
-	}
+	tokio::spawn(Logger::logger().say_str(None, "Prefire Async Webhook Message, to create Async Webhook Writer".to_string()));
+	LoggerWriter::logger_writer().say_str_sync("Prefire Sync Webhook Message, to create Sync Webhook Writer".to_string()).expect("");
 	
 	let hc = libhoney::Config {
 		options: libhoney::client::Options {
@@ -56,17 +45,24 @@ fn main() {
 	};
 	
 	let ht = eaze_tracing_honeycomb::new_honeycomb_telemetry_layer("C0D3-Bot-service", hc);
-	// NOTE: the underlying subscriber MUST be the Registry subscriber
-	let subscriber = registry::Registry::default() // provide underlying span data store
-		.with(LevelFilter::INFO) // filter out low-level debug tracing (eg tokio executor)
-		.with(tracing_subscriber::fmt::Layer::default()) // log to stdout
-		.with(webhook_sub)
-		.with(ht); // publish to honeycomb backend
 	
 	// let mut client = libhoney::init(hc.clone());
 	// let mut test_evt = client.new_event();
 	// test_evt.add_field("Hello",Value::String("World!".to_string()));
 	// test_evt.send(&mut client).map_err(|e|tracing::error!("got error from honeycomb: {}",e.to_string()));
+	
+	let webhook = 	tracing_subscriber::fmt::Layer::new()
+		.with_writer(LoggerWriter::logger_writer)
+		.compact()
+		.without_time()
+		.with_ansi(false);
+	let stdout = tracing_subscriber::fmt::Layer::default();
+	
+	let subscriber = registry::Registry::default() // provide underlying span data store
+		.with(LevelFilter::INFO) // filter out low-level debug tracing (eg tokio executor)
+		.with(stdout) // log to stdout
+		.with(webhook)//publish to discord
+		.with(ht); // publish to honeycomb backend
 	
 	tracing::subscriber::set_global_default(subscriber).expect("setting global default failed");
 	
@@ -75,8 +71,8 @@ fn main() {
 	sleep(Duration::from_secs(10))
 }
 
-fn is_logging_enabled(key: String) -> bool {
-	return match std::env::var(key) {
+pub fn is_logging_enabled(key: String) -> bool {
+	return match dotenv::var(key) {
 		Ok(v) => {
 			match v.parse::<bool>() {
 				Ok(v) => v,
