@@ -3,6 +3,7 @@ pub struct Constants {
     pub default_webhook_token: String,
     pub webhook_closed: String,
 }
+
 impl Constants {
     fn new() -> Self {
         Constants {
@@ -21,10 +22,12 @@ impl Constants {
         })
     }
 }
+
 fn get_dotenv(name: &str) -> String {
     std::env::var(name)
         .unwrap_or_else(|_| panic!("There is some error with the setting {} in dotenv!", name))
 }
+
 fn get_dotenv_id<T: std::str::FromStr>(name: &str) -> T {
     let type_name = std::any::type_name::<T>();
     get_dotenv(name).parse::<T>().unwrap_or_else(|_| {

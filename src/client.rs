@@ -11,6 +11,7 @@ use serenity::Client;
 use std::collections::HashSet;
 use std::sync::Arc;
 use tokio::sync::Mutex;
+
 pub struct ShardManagerContainer;
 
 impl TypeMapKey for ShardManagerContainer {
