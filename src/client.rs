@@ -4,6 +4,7 @@ use serenity::utils::{validate_token};
 use serenity::prelude::TypeMapKey;
 use serenity::Client;
 use std::collections::HashSet;
+use std::default::Default;
 use std::sync::Arc;
 
 use serenity::all::{GatewayIntents, UserId};
@@ -22,11 +23,11 @@ async fn ping(ctx: Context<'_>) -> Result<(), Error> {
     ctx.reply("Pong!").await?;
     Ok(())
 }
-#[poise::command(slash_command)]
+#[poise::command(slash_command, prefix_command)]
 async fn test(ctx: Context<'_>) -> Result<(), Error> {
     ctx.send(
         poise::CreateReply::default()
-            .reply(true)
+            .reply(false)
             .content("this is a component link button test")
             .components(vec![
                 serenity::CreateActionRow::Buttons(vec![
