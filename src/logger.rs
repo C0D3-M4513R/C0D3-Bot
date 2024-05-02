@@ -11,8 +11,7 @@ use tokio::sync::mpsc::UnboundedSender;
 use crate::constants::Constants;
 use crate::get_rt;
 use std::sync::Arc;
-
-type ChannelType<'a, 'b> = &'a mut ExecuteWebhook<'b>;
+use serenity::all::WebhookId;
 
 #[derive(Clone)]
 pub struct Logger {
@@ -23,13 +22,11 @@ pub struct Logger {
 }
 
 impl Logger {
-    pub async fn say_str<T: ToString>(&self, wait: Option<bool>, message: T) -> Option<Message> {
-        self.say(wait, |m| m.content(message)).await
+    pub async fn say_str<T: Into<String>>(&self, wait: Option<bool>, message: T) -> Option<Message> {
+        self.say(wait, ExecuteWebhook::new().content(message)).await
     }
 
-    pub async fn say<'b, F>(&self, wait: Option<bool>, message: F) -> Option<Message>
-    where
-        for<'c> F: FnOnce(ChannelType<'c, 'b>) -> ChannelType<'c, 'b>,
+    pub async fn say(&self, wait: Option<bool>, message: ExecuteWebhook) -> Option<Message>
     {
         match self
             .channel
@@ -59,9 +56,9 @@ impl Logger {
     }
 
     pub fn new(webhook_id: u64, webhook_token: &'static str) -> Self {
-        let context = Http::new_with_token(webhook_token);
+        let context = Http::new(webhook_token);
         let channel = get_rt()
-            .block_on((&context).get_webhook_with_token(webhook_id, webhook_token))
+            .block_on((&context).get_webhook_with_token(WebhookId::from(webhook_id), webhook_token))
             .map_err(|e| tracing::error!("Getting webhook failed, due to: '{}'", e.to_string()))
             .expect("See Logs!");
         Logger {

@@ -1,70 +1,69 @@
-use serenity::async_trait;
-use serenity::client::bridge::gateway::ShardManager;
-use serenity::client::{validate_token, Context};
-use serenity::framework::standard::macros::{command, group};
-use serenity::framework::StandardFramework;
-use serenity::http::Http;
-use serenity::model::channel::Message;
-use serenity::model::gateway::Ready;
+use poise::serenity_prelude as serenity;
+use serenity::gateway::ShardManager;
+use serenity::utils::{validate_token};
 use serenity::prelude::TypeMapKey;
 use serenity::Client;
 use std::collections::HashSet;
 use std::sync::Arc;
-use tokio::sync::Mutex;
+
+use serenity::all::{GatewayIntents, UserId};
 
 pub struct ShardManagerContainer;
 
 impl TypeMapKey for ShardManagerContainer {
-    type Value = Arc<Mutex<ShardManager>>;
+    type Value = Arc<ShardManager>;
 }
 
-struct Handler;
-
-#[group]
-#[commands(ping)]
-struct General;
-
-#[async_trait]
-impl serenity::client::EventHandler for Handler {
-    async fn ready(&self, _: Context, ready: Ready) {
-        match ready.shard {
-            Some(shard) => tracing::info!(
-                "{} is connected with shard {} of {}!",
-                ready.user.name,
-                shard[0],
-                shard[1]
-            ),
-            None => tracing::info!("{} is connected!", ready.user.name),
-        }
-    }
+struct Data {} // User data, which is stored and accessible in all command invocations
+type Error = Box<dyn std::error::Error + Send + Sync>;
+type Context<'a> = poise::Context<'a, Data, Error>;
+#[poise::command(slash_command)]
+async fn ping(ctx: Context<'_>) -> Result<(), Error> {
+    ctx.reply("Pong!").await?;
+    Ok(())
 }
+#[poise::command(slash_command)]
+async fn test(ctx: Context<'_>) -> Result<(), Error> {
+    ctx.send(
+        poise::CreateReply::default()
+            .reply(true)
+            .content("this is a component link button test")
+            .components(vec![
+                serenity::CreateActionRow::Buttons(vec![
+                    serenity::CreateButton::new_link("https://c0d3m4513r.com/")
+                        .label("C0D3-M4513R's Website")
+                ])
+            ])
+    ).await?;
+    Ok(())
+}
+
 
 pub async fn init_client() -> Client {
     tracing::debug!("Getting Client Token");
     let token = std::env::var("DISCORD_TOKEN").expect("No Token. Unable to Start Bot!");
     assert!(validate_token(&token).is_ok(), "Invalid discord token!");
 
-    let http = Http::new_with_token(&token);
+    let mut owners = HashSet::new();
+    owners.insert(UserId::new(245957509247008768)); //main
+    owners.insert(UserId::new(790211774900862997)); //alt
 
-    // We will fetch your bot's owners and id
-    let (owners, _bot_id) = match http.get_current_application_info().await {
-        Ok(info) => {
-            let mut owners = HashSet::new();
-            owners.insert(info.owner.id);
+    let framework = poise::framework::FrameworkBuilder::default()
+        .options(poise::FrameworkOptions {
+            commands: vec![ping(), test()],
+            owners,
+            ..Default::default()
+        })
+        .setup(|ctx, _ready, framework| {
+            Box::pin(async move {
+                poise::builtins::register_globally(ctx, &framework.options().commands).await?;
+                Ok(Data {})
+            })
+        })
+        .build();
 
-            (owners, info.id)
-        }
-        Err(why) => panic!("Could not access application info: {:?}", why),
-    };
-
-    // Create the framework
-    let framework = StandardFramework::new()
-        .configure(|c| c.owners(owners).prefix("~"))
-        .group(&GENERAL_GROUP);
-
-    let mut client = serenity::Client::builder(&token)
+    let mut client = serenity::Client::builder(&token, GatewayIntents::default())
         .framework(framework)
-        .event_handler(Handler)
         .await
         .expect("serenity failed sonehow!");
 
@@ -79,18 +78,11 @@ pub async fn init_client() -> Client {
         tokio::signal::ctrl_c()
             .await
             .expect("Could not register ctrl+c handler");
-        shard_manager.lock().await.shutdown_all().await;
+        shard_manager.shutdown_all().await;
     });
 
     if let Err(why) = client.start_autosharded().await {
         tracing::error!("Client error: {:?}", why);
     }
     return client;
-}
-
-#[command]
-async fn ping(ctx: &Context, msg: &Message) -> serenity::framework::standard::CommandResult {
-    msg.reply(ctx, "Pong!").await?;
-
-    Ok(())
 }

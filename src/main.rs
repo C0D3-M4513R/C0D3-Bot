@@ -5,7 +5,6 @@ mod logger;
 use logger::Logger;
 use logger::LoggerWriter;
 
-use eaze_tracing_honeycomb::{register_dist_tracing_root, TraceId};
 use std::thread::sleep;
 use std::time::Duration;
 use tokio::runtime::Runtime;
@@ -33,6 +32,7 @@ fn main() {
     // the CWD. See `./.env.example` for an example on how to structure this.
     dotenv::dotenv().expect("Failed to load .env file");
 
+/*
     tokio::spawn(Logger::logger().say_str(
         None,
         "Prefire Async Webhook Message, to create Async Webhook Writer".to_string(),
@@ -40,7 +40,6 @@ fn main() {
     LoggerWriter::logger_writer()
         .say_str_sync("Prefire Sync Webhook Message, to create Sync Webhook Writer".to_string())
         .expect("");
-
     let hc = libhoney::Config {
         options: libhoney::client::Options {
             api_key: "09ce78c7c38de75712bc9f9de35d9913".to_string(),
@@ -51,7 +50,6 @@ fn main() {
     };
 
     let ht = eaze_tracing_honeycomb::new_honeycomb_telemetry_layer("C0D3-Bot-service", hc);
-
     // let mut client = libhoney::init(hc.clone());
     // let mut test_evt = client.new_event();
     // test_evt.add_field("Hello",Value::String("World!".to_string()));
@@ -62,13 +60,14 @@ fn main() {
         .compact()
         .without_time()
         .with_ansi(false);
+*/
     let stdout = tracing_subscriber::fmt::Layer::default();
 
     let subscriber = registry::Registry::default() // provide underlying span data store
         .with(LevelFilter::INFO) // filter out low-level debug tracing (eg tokio executor)
-        .with(stdout) // log to stdout
-        .with(webhook) //publish to discord
-        .with(ht); // publish to honeycomb backend
+        .with(stdout); // log to stdout
+        // .with(webhook) //publish to discord
+        // .with(ht); // publish to honeycomb backend
 
     tracing::subscriber::set_global_default(subscriber).expect("setting global default failed");
 
@@ -85,7 +84,7 @@ pub fn is_logging_enabled(key: String) -> bool {
 
 #[instrument]
 fn start_client() {
-    register_dist_tracing_root(TraceId::new(), None).unwrap();
+    // eaze_tracing_honeycomb::register_dist_tracing_root(eaze_tracing_honeycomb::TraceId::new(), None).unwrap();
     tracing::info!("Client Startup");
     get_rt().block_on(client::init_client());
     tracing::debug!("Bye!");
