@@ -66,6 +66,7 @@
           buildInputs = [
             #cargo
             cargo-insta
+            docker-compose
             pre-commit
             #rust-analyzer
             #rustPackages.clippy
