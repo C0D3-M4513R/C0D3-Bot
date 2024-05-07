@@ -44,8 +44,8 @@ fn main() {
         .expect("");
     let hc = libhoney::Config {
         options: libhoney::client::Options {
-            api_key: "09ce78c7c38de75712bc9f9de35d9913".to_string(),
-            dataset: "C0D3-Bot".to_string(),
+            api_key: "some-api-key".to_string(),
+            dataset: "some-dataset".to_string(),
             ..libhoney::client::Options::default()
         },
         transmission_options: Default::default(),
