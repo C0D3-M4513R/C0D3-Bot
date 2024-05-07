@@ -41,7 +41,7 @@ async fn test(ctx: Context<'_>) -> Result<(), Error> {
 }
 
 ///Sends a message with some Component Link Buttons.
-#[poise::command(slash_command, prefix_command)]
+#[poise::command(slash_command, prefix_command, required_permissions="SEND_MESSAGES")]
 async fn message(ctx: Context<'_>,
                  #[description = "Message"] message: String,
 ) -> Result<(), Error> {
