@@ -19,6 +19,7 @@ use tracing_subscriber::registry;
 ///Return a static instance of a Runtime.
 /// This will only create a Runtime once, that can then be reused.
 #[must_use = "What is the point of getting a Runtime, and not doing anything?"]
+#[allow(static_mut_refs)]
 pub fn get_rt() -> &'static Runtime {
     static mut RT: Option<Runtime> = None;
     unsafe { &mut RT }.get_or_insert_with(|| tokio::runtime::Runtime::new().unwrap())

@@ -12,6 +12,7 @@ impl Constants {
             webhook_closed: "Channels got closed unexpectedly!".to_string(),
         }
     }
+    #[allow(static_mut_refs)]
     pub fn get_constants() -> &'static Self {
         //This should be fine, since this static is not mutable outside this function
         tracing::debug!("Getting Constants");

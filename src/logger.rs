@@ -75,6 +75,7 @@ impl Logger {
         )
     }
 
+    #[allow(static_mut_refs)]
     pub fn logger() -> &'static Logger {
         tracing::trace!("About to get Logger");
         //Use a OnceCell here, when the feature is stable?
@@ -123,6 +124,7 @@ impl LoggerWriter<String> {
         LoggerWriter { tx }
     }
 
+    #[allow(static_mut_refs)]
     pub fn logger_writer() -> &'static Self {
         tracing::trace!("About to get Logger");
         //Use a OnceCell here, when the feature is stable?
