@@ -55,7 +55,7 @@ async fn message(ctx: Context<'_>,
             ctx.channel_id().send_message(ctx, message.into()).await?;
             ctx.send(CreateReply::default().ephemeral(true).content("Send new Message!")).await?;
         },
-        Some(MessageFlags::Edit(message_id)) => {
+        Some(MessageFlags::Edit{id: message_id}) => {
             ctx.channel_id().edit_message(ctx, message_id, message.into()).await?;
             ctx.send(CreateReply::default().ephemeral(true).content("Send new Message!")).await?;
         }

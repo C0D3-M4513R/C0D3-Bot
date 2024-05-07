@@ -24,7 +24,7 @@ pub enum MessageFlags {
     Reply,
     Ephemral,
     NoReply,
-    Edit(MessageId)
+    Edit{id: MessageId}
 }
 macro_rules! recreate {
     ($builder:ident, $attr:ident, $($field: ident),+) => {
