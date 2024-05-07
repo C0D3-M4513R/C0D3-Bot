@@ -1,4 +1,4 @@
-use poise::serenity_prelude as serenity;
+use poise::{CreateReply, serenity_prelude as serenity};
 use serenity::gateway::ShardManager;
 use serenity::utils::{validate_token};
 use serenity::prelude::TypeMapKey;
@@ -8,6 +8,7 @@ use std::default::Default;
 use std::sync::Arc;
 
 use serenity::all::{GatewayIntents, UserId};
+use crate::message::MessageFlags;
 
 pub struct ShardManagerContainer;
 
@@ -39,6 +40,29 @@ async fn test(ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
+///Sends a message with some Component Link Buttons.
+#[poise::command(slash_command, prefix_command)]
+async fn message(ctx: Context<'_>,
+                 #[description = "Message"] message: String,
+) -> Result<(), Error> {
+    let message:super::message::Message = serde_json::from_str(message.as_str())?;
+
+    match message.flags.as_ref().copied() {
+        None | Some(MessageFlags::Reply) | Some(MessageFlags::Ephemral) => {
+            ctx.send(message.into()).await?;
+        },
+        Some(MessageFlags::NoReply) => {
+            ctx.channel_id().send_message(ctx, message.into()).await?;
+            ctx.send(CreateReply::default().ephemeral(true).content("Send new Message!")).await?;
+        },
+        Some(MessageFlags::Edit(message_id)) => {
+            ctx.channel_id().edit_message(ctx, message_id, message.into()).await?;
+            ctx.send(CreateReply::default().ephemeral(true).content("Send new Message!")).await?;
+        }
+    }
+    Ok(())
+}
+
 
 pub async fn init_client() -> Client {
     tracing::debug!("Getting Client Token");
@@ -51,7 +75,7 @@ pub async fn init_client() -> Client {
 
     let framework = poise::framework::FrameworkBuilder::default()
         .options(poise::FrameworkOptions {
-            commands: vec![ping(), test()],
+            commands: vec![ping(), test(), message()],
             owners,
             ..Default::default()
         })

@@ -1,6 +1,7 @@
 mod client;
 mod constants;
 mod logger;
+mod message;
 
 use logger::Logger;
 use logger::LoggerWriter;
