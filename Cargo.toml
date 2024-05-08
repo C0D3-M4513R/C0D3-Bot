@@ -2,9 +2,9 @@
 name = "untitled"
 version = "0.1.0"
 authors = ["C0D3 M4513R <28912031+C0D3-M4513R@users.noreply.github.com>"]
-edition = "2018"
+edition = "2021"
 #include = ["src/**"]
-include = ["test/**"]
+#include = ["test/**"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
