@@ -21,22 +21,17 @@ type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
 #[poise::command(slash_command)]
 async fn ping(ctx: Context<'_>) -> Result<(), Error> {
-    ctx.reply("Pong!").await?;
-    Ok(())
-}
-#[poise::command(slash_command, prefix_command)]
-async fn test(ctx: Context<'_>) -> Result<(), Error> {
-    ctx.send(
-        poise::CreateReply::default()
-            .reply(false)
-            .content("this is a component link button test")
-            .components(vec![
-                serenity::CreateActionRow::Buttons(vec![
-                    serenity::CreateButton::new_link("https://c0d3m4513r.com/")
-                        .label("C0D3-M4513R's Website")
-                ])
-            ])
-    ).await?;
+    const CONVERSION_STEP:u32 = 1000;
+    let time = ctx.ping().await;
+    let ns = time.subsec_nanos();
+    //get submicro_nanos
+    let us = ns/CONVERSION_STEP;
+    let ns = ns - us *CONVERSION_STEP;
+    //get submilli_micros
+    let ms = us /CONVERSION_STEP;
+    let us = us - ms*CONVERSION_STEP;
+    //get subsec_milli
+    ctx.send(CreateReply::default().content(format!("Pong! Latency to Gateway: {}s{ms}ms{us}µs{ns}ns", time.as_secs(), )).ephemeral(true).reply(true)).await?;
     Ok(())
 }
 
@@ -75,7 +70,7 @@ pub async fn init_client() -> Client {
 
     let framework = poise::framework::FrameworkBuilder::default()
         .options(poise::FrameworkOptions {
-            commands: vec![ping(), test(), message()],
+            commands: vec![ping(), message()],
             owners,
             ..Default::default()
         })
