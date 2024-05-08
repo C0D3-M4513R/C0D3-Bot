@@ -1,9 +1,18 @@
-FROM rust:bullseye as builder
-RUN git clone http://192.168.1.2:8081/c0d3-m4513r/rust-dc-bot.git
-WORKDIR rust-dc-bot
-RUN cargo install --path .
+FROM rust:alpine as builder
+RUN apk add musl-dev
+WORKDIR /rust-dc-bot
+#build layer with dummy project first, to cache dependencies
+ADD Cargo.* .
+RUN \
+    mkdir src && \
+    echo 'fn main() {}' > src/main.rs && \
+    cargo build --release && \
+    rm -Rvf src
+#actually build the application now
+ADD src/ src/
+RUN touch src/main.rs && cargo build --release
 
-FROM debian:bullseye-slim
+FROM alpine:latest
 COPY --from=builder /rust-dc-bot/target/release/untitled /untitled
 WORKDIR "/data"
 CMD ["/untitled"]
