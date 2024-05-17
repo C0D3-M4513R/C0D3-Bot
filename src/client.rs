@@ -3,11 +3,10 @@ use serenity::gateway::ShardManager;
 use serenity::utils::{validate_token};
 use serenity::prelude::TypeMapKey;
 use serenity::Client;
-use std::collections::HashSet;
 use std::default::Default;
 use std::sync::Arc;
 
-use serenity::all::{GatewayIntents, UserId};
+use serenity::all::GatewayIntents;
 use crate::message::MessageFlags;
 
 pub struct ShardManagerContainer;
@@ -19,7 +18,12 @@ impl TypeMapKey for ShardManagerContainer {
 struct Data {} // User data, which is stored and accessible in all command invocations
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
-#[poise::command(slash_command)]
+
+///Gets the latency of the current shard to discord's gateway.
+#[poise::command(
+    slash_command,
+    install_context = "Guild|User",
+)]
 async fn ping(ctx: Context<'_>) -> Result<(), Error> {
     const CONVERSION_STEP:u32 = 1000;
     let time = ctx.ping().await;
@@ -31,12 +35,15 @@ async fn ping(ctx: Context<'_>) -> Result<(), Error> {
     let ms = us /CONVERSION_STEP;
     let us = us - ms*CONVERSION_STEP;
     //get subsec_milli
-    ctx.send(CreateReply::default().content(format!("Pong! Latency to Gateway: {}s{ms}ms{us}µs{ns}ns", time.as_secs(), )).ephemeral(true).reply(true)).await?;
+    ctx.send(CreateReply::default().content(format!("Pong! Shard {}'s Latency to Gateway: {}s{ms}ms{us}µs{ns}ns", ctx.serenity_context().shard_id, time.as_secs(), )).ephemeral(true).reply(true)).await?;
     Ok(())
 }
 
 ///Sends a message with some Component Link Buttons.
-#[poise::command(slash_command, prefix_command, required_permissions="SEND_MESSAGES")]
+#[poise::command(
+    slash_command,
+    install_context = "Guild|User",
+)]
 async fn message(ctx: Context<'_>,
                  #[description = "Message"] message: String,
 ) -> Result<(), Error> {
@@ -64,14 +71,9 @@ pub async fn init_client() -> Client {
     let token = std::env::var("DISCORD_TOKEN").expect("No Token. Unable to Start Bot!");
     assert!(validate_token(&token).is_ok(), "Invalid discord token!");
 
-    let mut owners = HashSet::new();
-    owners.insert(UserId::new(245957509247008768)); //main
-    owners.insert(UserId::new(790211774900862997)); //alt
-
     let framework = poise::framework::FrameworkBuilder::default()
         .options(poise::FrameworkOptions {
             commands: vec![ping(), message()],
-            owners,
             ..Default::default()
         })
         .setup(|ctx, _ready, framework| {
