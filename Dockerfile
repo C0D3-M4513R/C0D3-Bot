@@ -12,7 +12,8 @@ RUN \
 ADD src/ src/
 RUN touch src/main.rs && cargo build --release
 
-FROM alpine:latest
+#FROM alpine:latest
+FROM scratch
 COPY --from=builder /rust-dc-bot/target/release/untitled /untitled
 WORKDIR "/data"
 CMD ["/untitled"]

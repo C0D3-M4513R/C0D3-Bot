@@ -27,4 +27,4 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/c0d3-m4513r/rust-dc-bot:latest
+            ghcr.io/c0d3-m4513r/c0d3-bot:latest
