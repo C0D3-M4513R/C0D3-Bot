@@ -8,7 +8,7 @@ on:
       - main
 jobs:
   push:
-    name: "rust-dc-bot:${{ matrix.tag }}"
+    name: "rust-dc-bot"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -24,4 +24,4 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/c0d3-m4513r/rust-dc-bot:${{ matrix.tag }}
+            ghcr.io/c0d3-m4513r/rust-dc-bot:latest
