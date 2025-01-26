@@ -6,7 +6,7 @@ use serenity::Client;
 use std::default::Default;
 use std::sync::Arc;
 
-use serenity::all::GatewayIntents;
+use serenity::all::{CreateMessage, GatewayIntents};
 use crate::message::MessageFlags;
 
 pub struct ShardManagerContainer;
@@ -53,6 +53,12 @@ async fn message(ctx: Context<'_>,
         None | Some(MessageFlags::Reply) | Some(MessageFlags::Ephemral) => {
             ctx.send(message.into()).await?;
         },
+        Some(MessageFlags::NoCommandReply{id}) => {
+            let message:CreateMessage = message.into();
+            let message = message.reference_message((ctx.channel_id(), id));
+            ctx.channel_id().send_message(ctx, message).await?;
+            ctx.send(CreateReply::default().ephemeral(true).content("Send new Message!")).await?;
+        }
         Some(MessageFlags::NoReply) => {
             ctx.channel_id().send_message(ctx, message.into()).await?;
             ctx.send(CreateReply::default().ephemeral(true).content("Send new Message!")).await?;

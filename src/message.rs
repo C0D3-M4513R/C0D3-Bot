@@ -24,6 +24,7 @@ pub enum MessageFlags {
     Reply,
     Ephemral,
     NoReply,
+    NoCommandReply{id: MessageId},
     Edit{id: MessageId}
 }
 macro_rules! recreate {
