@@ -1,10 +1,5 @@
 mod client;
-mod constants;
-mod logger;
 mod message;
-
-use logger::Logger;
-use logger::LoggerWriter;
 
 use std::thread::sleep;
 use std::time::Duration;
