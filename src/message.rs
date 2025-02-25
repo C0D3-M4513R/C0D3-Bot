@@ -38,7 +38,7 @@ fn recreate_button_builder(button: serenity::all::Button) -> CreateButton{
     let mut builder = match button.data{
         ButtonKind::Link { url } => CreateButton::new_link(url),
         ButtonKind::NonLink { custom_id, style } => CreateButton::new(custom_id).style(style),
-        // ButtonKind::Premium { sku_id } => CreateButton::new_premium(sku_id),
+        ButtonKind::Premium { sku_id } => CreateButton::new_premium(sku_id),
     };
     recreate!(builder, button, label, emoji);
     builder.disabled(button.disabled)
