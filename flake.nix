@@ -47,6 +47,9 @@
 
           cargoLock = {
             lockFile = ./Cargo.lock;
+            outputHashes = {
+                "poise-0.6.1" = "sha256-iXyp9sR/vzPsexGPdRjfuKyFcGqvDdqiBAXnuw/HFo8=";
+            };
           };
 
           nativeBuildInputs = [
