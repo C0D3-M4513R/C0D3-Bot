@@ -83,7 +83,6 @@
             copyToRoot = [ package ];
 
             config = {
-                WORKDIR = "/data";
                 Cmd = [ "${nixpkgs.lib.getExe package}" ];
             };
 
