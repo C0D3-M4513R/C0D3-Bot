@@ -5,6 +5,11 @@ on:
     branches:
       - main
       - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+
 jobs:
   build:
     permissions:
@@ -69,11 +74,10 @@ jobs:
           git push origin "$tag"
 
       - name: re-tag as version and push
-        if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev' }}
         run: |
           version=$(yq .package.version Cargo.toml)
-          docker tag $(yq .package.name Cargo.toml):${version}-${{ matrix.arch }} ghcr.io/c0d3-m4513r/c0d3-bot:${version}-${{ matrix.arch }}
-          docker push ghcr.io/c0d3-m4513r/c0d3-bot:${version}-${{ matrix.arch }}
+          docker tag $(yq .package.name Cargo.toml):${version}-${{ matrix.arch }} ghcr.io/c0d3-m4513r/c0d3-bot:${GITHUB_SHA}-${{ matrix.arch }}
+          docker push ghcr.io/c0d3-m4513r/c0d3-bot:${GITHUB_SHA}-${{ matrix.arch }}
   multi-arch:
     permissions:
       packages: write
@@ -91,7 +95,7 @@ jobs:
 
       - name: Create and Push Version manifest
         run: |
-          version=$(yq .package.version Cargo.toml)
+          version=${GITHUB_SHA}
           docker manifest create ghcr.io/c0d3-m4513r/c0d3-bot:${version} ghcr.io/c0d3-m4513r/c0d3-bot:${version}-amd64 ghcr.io/c0d3-m4513r/c0d3-bot:${version}-arm64
           docker manifest annotate ghcr.io/c0d3-m4513r/c0d3-bot:${version} ghcr.io/c0d3-m4513r/c0d3-bot:${version}-amd64 --arch amd64
           docker manifest annotate ghcr.io/c0d3-m4513r/c0d3-bot:${version} ghcr.io/c0d3-m4513r/c0d3-bot:${version}-arm64 --arch arm64
@@ -100,7 +104,7 @@ jobs:
       - name: Create and Push latest manifest
         if: ${{ github.ref == 'refs/heads/main' }}
         run: |
-          version=$(yq .package.version Cargo.toml)
+          version=${GITHUB_SHA}
           docker manifest create ghcr.io/c0d3-m4513r/c0d3-bot:latest ghcr.io/c0d3-m4513r/c0d3-bot:${version}-amd64 ghcr.io/c0d3-m4513r/c0d3-bot:${version}-arm64
           docker manifest annotate ghcr.io/c0d3-m4513r/c0d3-bot:latest ghcr.io/c0d3-m4513r/c0d3-bot:${version}-amd64 --arch amd64
           docker manifest annotate ghcr.io/c0d3-m4513r/c0d3-bot:latest ghcr.io/c0d3-m4513r/c0d3-bot:${version}-arm64 --arch arm64
@@ -109,7 +113,7 @@ jobs:
       - name: Create and Push nightly manifest
         if: ${{ github.ref == 'refs/heads/dev' }}
         run: |
-          version=$(yq .package.version Cargo.toml)
+          version=${GITHUB_SHA}
           docker manifest create ghcr.io/c0d3-m4513r/c0d3-bot:nightly ghcr.io/c0d3-m4513r/c0d3-bot:${version}-amd64 ghcr.io/c0d3-m4513r/c0d3-bot:${version}-arm64
           docker manifest annotate ghcr.io/c0d3-m4513r/c0d3-bot:nightly ghcr.io/c0d3-m4513r/c0d3-bot:${version}-amd64 --arch amd64
           docker manifest annotate ghcr.io/c0d3-m4513r/c0d3-bot:nightly ghcr.io/c0d3-m4513r/c0d3-bot:${version}-arm64 --arch arm64
