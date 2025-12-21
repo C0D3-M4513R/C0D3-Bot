@@ -2,9 +2,12 @@
   inputs = {
     # This must be the stable nixpkgs if you're running the app on a
     # stable NixOS install.  Mixing EGL library versions doesn't work.
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
     utils.url = "github:numtide/flake-utils";
-    rust-overlay.url = "github:oxalica/rust-overlay";
+    rust-overlay = {
+        url = "github:oxalica/rust-overlay";
+        inputs.nixpkgs.follows = "nixpkgs";
+    };
     flake-compat = {
       url = github:edolstra/flake-compat;
       flake = true;
@@ -37,9 +40,10 @@
         commonBuildInputs = with pkgs; [
           pkg-config
           openssl
+          libgcc
         ];
 
-        package = pkgs.rust.packages.stable.rustPlatform.buildRustPackage rec{
+        package = pkgs.rustPlatform.buildRustPackage rec{
           pname = manifest.name;
           version = manifest.version;
           src = pkgs.lib.cleanSource ./.;
@@ -57,13 +61,12 @@
           ];
 
           buildInputs = with pkgs; [
-            pkgs.rust-bin.stable.latest.default
           ] ++ commonBuildInputs;
 
           # Certain Rust tools won't work without this
           # This can also be fixed by using oxalica/rust-overlay and specifying the rust-src extension
           # See https://discourse.nixos.org/t/rust-src-not-found-and-other-misadventures-of-developing-rust-on-nixos/11570/3?u=samuela. for more details.
-          RUST_SRC_PATH = pkgs.rust.packages.stable.rustPlatform.rustLibSrc;
+          RUST_SRC_PATH = pkgs.rustPlatform.rustLibSrc;
           PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
           #LD_LIBRARY_PATH = libPath;
           OPENSSL_LIB_DIR = pkgs.openssl.out + "/lib";
@@ -116,7 +119,7 @@
             #rustfmt
             tokei
           ] ++ commonBuildInputs;
-          RUST_SRC_PATH = pkgs.rust.packages.stable.rustPlatform.rustLibSrc;
+          RUST_SRC_PATH = pkgs.rustPlatform.rustLibSrc;
           LD_LIBRARY_PATH = lib.makeLibraryPath commonBuildInputs;
           GIT_EXTERNAL_DIFF = "${difftastic}/bin/difft";
         };
